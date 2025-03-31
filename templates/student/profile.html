@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile | College Bus Card Management System{% endblock %}
+
+{% block heading %}My Profile{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Profile Details -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Personal Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="profile-avatar mx-auto">
+                        {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+                    </div>
+                    <h4 class="mt-3">{{ current_user.first_name }} {{ current_user.last_name }}</h4>
+                    <p class="text-muted">{{ profile.student_id }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6>Contact Information</h6>
+                    <p><strong>Email:</strong> {{ current_user.email }}</p>
+                    <p><strong>Phone:</strong> {{ current_user.phone or 'Not provided' }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6>Account Details</h6>
+                    <p><strong>Username:</strong> {{ current_user.username }}</p>
+                    <p><strong>Account Created:</strong> {{ current_user.created_at.strftime('%d/%m/%Y') }}</p>
+                </div>
+                
+                <div class="d-grid gap-2 mt-4">
+                    <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline-primary">Change Password</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Academic Information -->
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Academic & Bus Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('student.profile') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ form.student_id.label(class="form-label") }}
+                            {{ form.student_id(class="form-control", readonly=true) }}
+                            {% if form.student_id.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.student_id.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form.department.label(class="form-label") }}
+                            {{ form.department(class="form-control", placeholder="e.g., Computer Science") }}
+                            {% if form.department.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.department.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ form.year.label(class="form-label") }}
+                            {{ form.year(class="form-control", type="number", min=1, max=5) }}
+                            {% if form.year.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.year.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form.semester.label(class="form-label") }}
+                            {{ form.semester(class="form-control", type="number", min=1, max=10) }}
+                            {% if form.semester.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.semester.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.location_id.label(class="form-label") }}
+                        {{ form.location_id(class="form-select") }}
+                        {% if form.location_id.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.location_id.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Card Information -->
+        <div class="card mt-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Bus Card Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Card Status</h6>
+                        <p>
+                            <span class="status-badge {{ profile.card_status }}">
+                                {{ profile.card_status|capitalize }}
+                            </span>
+                        </p>
+                        <p><strong>Card Number:</strong> {{ profile.card_number or 'Not Assigned' }}</p>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6>Fee Information</h6>
+                        <p>
+                            <span class="status-badge {{ profile.fee_status }}">
+                                {{ profile.fee_status|capitalize }}
+                            </span>
+                        </p>
+                        
+                        {% if profile.location %}
+                        <p><strong>Route Fee:</strong> ₹{{ profile.location.fee_amount }}</p>
+                        {% endif %}
+                        
+                        {% if profile.fee_due_date %}
+                        <p><strong>Due Date:</strong> {{ profile.fee_due_date.strftime('%d/%m/%Y') }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="d-grid">
+                            <a href="{{ url_for('student.card_requests') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-id-card me-1"></i> Manage Card
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="d-grid">
+                            <a href="{{ url_for('student.payment') }}" class="btn btn-outline-success">
+                                <i class="fas fa-money-bill-wave me-1"></i> Make Payment
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

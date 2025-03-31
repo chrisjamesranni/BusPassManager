@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard | College Bus Card Management System{% endblock %}
+
+{% block heading %}My Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Student Profile Overview -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">My Profile</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <div class="profile-avatar mx-auto">
+                        {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+                    </div>
+                    <h5 class="mt-3">{{ current_user.first_name }} {{ current_user.last_name }}</h5>
+                    <p class="text-muted">{{ profile.student_id }}</p>
+                </div>
+                
+                <div class="border-top pt-3">
+                    <div class="row">
+                        <div class="col-6 text-center">
+                            <h6>Card Status</h6>
+                            <span class="badge {% if profile.card_status == 'active' %}bg-success{% elif profile.card_status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ profile.card_status|capitalize }}
+                            </span>
+                        </div>
+                        <div class="col-6 text-center">
+                            <h6>Fee Status</h6>
+                            <span class="badge {% if profile.fee_status == 'paid' %}bg-success{% elif profile.fee_status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ profile.fee_status|capitalize }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <a href="{{ url_for('student.profile') }}" class="btn btn-outline-primary d-block">View Full Profile</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- QR Code Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">My Bus Card</h5>
+            </div>
+            <div class="card-body text-center">
+                {% if profile.card_status == 'active' %}
+                <div class="mb-3">
+                    <div id="qrcode"></div>
+                </div>
+                <p><strong>Card Number:</strong> {{ profile.card_number }}</p>
+                <p class="text-success"><i class="fas fa-check-circle"></i> Your card is active</p>
+                {% else %}
+                <div class="alert alert-warning mb-3">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    {% if profile.card_status == 'pending' %}
+                    Your card request is being processed.
+                    {% elif profile.card_status == 'inactive' %}
+                    You don't have an active bus card.
+                    {% elif profile.card_status == 'cancelled' %}
+                    Your card has been cancelled.
+                    {% else %}
+                    Your card is {{ profile.card_status }}.
+                    {% endif %}
+                </div>
+                {% if not card_requests %}
+                <a href="{{ url_for('student.card_requests') }}" class="btn btn-primary">Request a Card</a>
+                {% else %}
+                <p class="text-muted">You have a pending card request.</p>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notifications -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Notifications</h5>
+                <span class="badge bg-light text-dark">{{ notifications|length }}</span>
+            </div>
+            <div class="card-body">
+                {% if notifications %}
+                <div class="notification-list">
+                    {% for notification in notifications %}
+                    <div class="notification-item unread mb-3">
+                        <div class="d-flex justify-content-between">
+                            <h6 class="notification-title">{{ notification.title }}</h6>
+                            <span class="notification-timestamp">{{ notification.created_at.strftime('%d/%m/%Y') }}</span>
+                        </div>
+                        <p class="mb-2">{{ notification.message }}</p>
+                        <button class="btn btn-sm btn-outline-secondary mark-read-btn" data-id="{{ notification.id }}">
+                            Mark as Read
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('student.notifications') }}" class="btn btn-sm btn-outline-primary">View All Notifications</a>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">You have no new notifications.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Payment Information -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Payment Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h6>Due Amount</h6>
+                                <h4 class="{% if profile.current_dues %}text-danger{% endif %}">
+                                    ₹{{ profile.current_dues or '0.00' }}
+                                </h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h6>Fine</h6>
+                                <h4 class="{% if profile.fine_amount %}text-danger{% endif %}">
+                                    ₹{{ profile.fine_amount or '0.00' }}
+                                </h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if profile.location %}
+                <p><strong>Route:</strong> {{ profile.location.name }}</p>
+                <p><strong>Distance:</strong> {{ profile.location.distance }} km</p>
+                <p><strong>Base Fee:</strong> ₹{{ profile.location.fee_amount }}</p>
+                {% else %}
+                <p class="text-warning">Please update your profile with your location.</p>
+                {% endif %}
+                
+                {% if profile.fee_due_date %}
+                <p><strong>Next Due Date:</strong> {{ profile.fee_due_date.strftime('%d/%m/%Y') }}</p>
+                {% endif %}
+                
+                <div class="d-grid gap-2 mt-3">
+                    <a href="{{ url_for('student.payment') }}" class="btn btn-primary">Make Payment</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Payments -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Recent Payments</h5>
+            </div>
+            <div class="card-body">
+                {% if payments %}
+                <div class="chart-container mb-3">
+                    <canvas id="paymentChart" data-payments="{{ payments|tojson }}"></canvas>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Method</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payments %}
+                            <tr>
+                                <td>{{ payment.payment_date.strftime('%d/%m/%Y') }}</td>
+                                <td>₹{{ payment.amount }}</td>
+                                <td>{{ payment.payment_method|replace('_', ' ')|capitalize }}</td>
+                                <td>
+                                    <span class="badge {% if payment.payment_status == 'paid' %}bg-success{% elif payment.payment_status == 'pending' %}bg-warning{% elif payment.payment_status == 'refunded' %}bg-info{% else %}bg-danger{% endif %}">
+                                        {{ payment.payment_status|capitalize }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No payment history available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode.js/qrcode.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const qrcodeContainer = document.getElementById('qrcode');
+        
+        if (qrcodeContainer) {
+            // Generate QR code with the student ID
+            QRCode.toCanvas(qrcodeContainer, "{{ profile.student_id }}", {
+                width: 200,
+                margin: 1,
+                color: {
+                    dark: '#000',
+                    light: '#fff'
+                }
+            }, function(error) {
+                if (error) console.error(error);
+            });
+        }
+    });
+</script>
+{% endblock %}

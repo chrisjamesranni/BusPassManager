@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+
+{% block title %}Accountant Dashboard | College Bus Card Management System{% endblock %}
+
+{% block heading %}
+{% if view_payments %}Payment Records{% elif view_locations %}Location Fee Details{% elif view_reports %}Financial Reports{% else %}Accountant Dashboard{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if not view_payments and not view_locations and not view_reports %}
+<!-- Dashboard Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card bg-primary text-white">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-value">{{ total_students }}</div>
+            <div class="stat-title">Total Students</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card bg-success text-white">
+            <div class="stat-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-value">{{ paid_students }}</div>
+            <div class="stat-title">Paid Students</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card bg-warning text-white">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-value">{{ pending_students }}</div>
+            <div class="stat-title">Pending Fee</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card bg-danger text-white">
+            <div class="stat-icon">
+                <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <div class="stat-value">{{ overdue_students }}</div>
+            <div class="stat-title">Overdue Fee</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Payment Chart -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Monthly Fee Collections</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="adminPaymentChart" data-payments="{{ payment_months|tojson }}"></canvas>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Total Collections: <strong>₹{{ total_fees|round(2) }}</strong></span>
+                    <span>This Month: <strong>₹{{ monthly_payments|round(2) }}</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Payments -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Recent Payments</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_payments %}
+                <div class="list-group">
+                    {% for payment in recent_payments %}
+                    <div class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ payment.user.first_name }} {{ payment.user.last_name }}</h6>
+                            <small>{{ payment.payment_date.strftime('%d/%m/%Y') }}</small>
+                        </div>
+                        <p class="mb-1">₹{{ payment.amount }} via {{ payment.payment_method|replace('_', ' ')|capitalize }}</p>
+                        <small class="badge {% if payment.payment_status == 'paid' %}bg-success{% elif payment.payment_status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                            {{ payment.payment_status|capitalize }}
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="mt-3">
+                    <a href="{{ url_for('accountant.payments') }}" class="btn btn-sm btn-outline-primary">View All Payments</a>
+                </div>
+                {% else %}
+                <p class="text-muted">No recent payments.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Payment Records View -->
+{% if view_payments %}
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Payment Records</h5>
+    </div>
+    <div class="card-body">
+        {% if payments %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Payment ID</th>
+                        <th>Student</th>
+                        <th>Amount</th>
+                        <th>Payment Date</th>
+                        <th>Method</th>
+                        <th>Transaction ID</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                    <tr>
+                        <td>{{ payment.id }}</td>
+                        <td>{{ payment.user.first_name }} {{ payment.user.last_name }}</td>
+                        <td>₹{{ payment.amount }}</td>
+                        <td>{{ payment.payment_date.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>{{ payment.payment_method|replace('_', ' ')|capitalize }}</td>
+                        <td>{{ payment.transaction_id }}</td>
+                        <td>
+                            <span class="badge {% if payment.payment_status == 'paid' %}bg-success{% elif payment.payment_status == 'pending' %}bg-warning{% elif payment.payment_status == 'refunded' %}bg-info{% else %}bg-danger{% endif %}">
+                                {{ payment.payment_status|capitalize }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton{{ payment.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Update
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton{{ payment.id }}">
+                                    <li>
+                                        <form method="POST" action="{{ url_for('accountant.update_payment_status', payment_id=payment.id, status='paid') }}">
+                                            <button type="submit" class="dropdown-item">Mark as Paid</button>
+                                        </form>
+                                    </li>
+                                    <li>
+                                        <form method="POST" action="{{ url_for('accountant.update_payment_status', payment_id=payment.id, status='pending') }}">
+                                            <button type="submit" class="dropdown-item">Mark as Pending</button>
+                                        </form>
+                                    </li>
+                                    <li>
+                                        <form method="POST" action="{{ url_for('accountant.update_payment_status', payment_id=payment.id, status='failed') }}">
+                                            <button type="submit" class="dropdown-item">Mark as Failed</button>
+                                        </form>
+                                    </li>
+                                    <li>
+                                        <form method="POST" action="{{ url_for('accountant.update_payment_status', payment_id=payment.id, status='refunded') }}">
+                                            <button type="submit" class="dropdown-item">Mark as Refunded</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No payment records found.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Location Fee Details View -->
+{% if view_locations %}
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Location Fee Details</h5>
+    </div>
+    <div class="card-body">
+        {% if locations %}
+        <div class="table-responsive">
+            <table class="table table-hover location-table">
+                <thead>
+                    <tr>
+                        <th>Location Name</th>
+                        <th>Distance (km)</th>
+                        <th>Fee Amount</th>
+                        <th>Students Assigned</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for location in locations %}
+                    <tr>
+                        <td>{{ location.name }}</td>
+                        <td>{{ location.distance }}</td>
+                        <td class="fee-amount">₹{{ location.fee_amount }}</td>
+                        <td>{{ location.student_profiles|length }}</td>
+                        <td>
+                            <span class="badge {% if location.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ 'Active' if location.is_active else 'Inactive' }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No locations found.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Financial Reports View -->
+{% if view_reports %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Fee Collection by Month</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyCollectionChart" data-months="{{ months|tojson }}" data-values="{{ month_values|tojson }}"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Fee Status Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="feeStatusChart" data-status="{{ fee_status|tojson }}"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Location-wise Fee Collection</h5>
+    </div>
+    <div class="card-body">
+        <canvas id="locationChart" data-locations="{{ location_fees|tojson }}"></canvas>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Monthly Collection Chart
+        const monthlyChartEl = document.getElementById('monthlyCollectionChart');
+        if (monthlyChartEl) {
+            const months = JSON.parse(monthlyChartEl.getAttribute('data-months'));
+            const values = JSON.parse(monthlyChartEl.getAttribute('data-values'));
+            
+            new Chart(monthlyChartEl, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Fee Collection',
+                        data: values,
+                        backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Amount (₹)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Fee Status Chart
+        const statusChartEl = document.getElementById('feeStatusChart');
+        if (statusChartEl) {
+            const statusData = JSON.parse(statusChartEl.getAttribute('data-status'));
+            const labels = statusData.map(item => item.fee_status);
+            const data = statusData.map(item => item.count);
+            const backgroundColors = [
+                'rgba(75, 192, 192, 0.7)',  // paid - green
+                'rgba(255, 206, 86, 0.7)',  // pending - yellow
+                'rgba(255, 99, 132, 0.7)'   // overdue - red
+            ];
+            
+            new Chart(statusChartEl, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColors,
+                        borderColor: backgroundColors.map(color => color.replace('0.7', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Location Chart
+        const locationChartEl = document.getElementById('locationChart');
+        if (locationChartEl) {
+            const locationData = JSON.parse(locationChartEl.getAttribute('data-locations'));
+            const locations = locationData.map(l => l.name);
+            const students = locationData.map(l => l.student_count);
+            const fees = locationData.map(l => l.total_fee);
+            
+            new Chart(locationChartEl, {
+                type: 'bar',
+                data: {
+                    labels: locations,
+                    datasets: [
+                        {
+                            label: 'Student Count',
+                            data: students,
+                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Total Fee (₹)',
+                            data: fees,
+                            backgroundColor: 'rgba(255, 159, 64, 0.7)',
+                            borderColor: 'rgba(255, 159, 64, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Number of Students'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Total Fee (₹)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

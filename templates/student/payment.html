@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}Make Payment | College Bus Card Management System{% endblock %}
+
+{% block heading %}Make Payment{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Payment Form -->
+    <div class="col-md-5 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Payment Details</h5>
+            </div>
+            <div class="card-body">
+                {% if pending_amount > 0 %}
+                <div class="alert alert-info mb-4">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="fas fa-info-circle fa-2x"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Payment Required</h6>
+                            <p class="mb-0">Your pending amount is <strong id="pending-amount">{{ pending_amount }}</strong></p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <form method="POST" action="{{ url_for('student.payment') }}" id="payment-form">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.amount.label(class="form-label") }}
+                        {{ form.amount(class="form-control", type="number", step="0.01", placeholder="Enter amount") }}
+                        {% if form.amount.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.amount.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.payment_method.label(class="form-label") }}
+                        {{ form.payment_method(class="form-select") }}
+                        {% if form.payment_method.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.payment_method.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Credit/Debit Card Details -->
+                    <div id="card-details" class="payment-detail-section">
+                        <div class="mb-3">
+                            <label for="card-number" class="form-label">Card Number</label>
+                            <input type="text" id="card-number" class="form-control" placeholder="1234 5678 9012 3456" maxlength="19">
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="card-name" class="form-label">Name on Card</label>
+                                <input type="text" id="card-name" class="form-control" placeholder="John Doe">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="card-expiry" class="form-label">Expiry</label>
+                                <input type="text" id="card-expiry" class="form-control" placeholder="MM/YY" maxlength="5">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="card-cvv" class="form-label">CVV</label>
+                                <input type="text" id="card-cvv" class="form-control" placeholder="123" maxlength="3">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Net Banking Details -->
+                    <div id="netbanking-details" class="payment-detail-section">
+                        <div class="mb-3">
+                            <label for="bank-select" class="form-label">Select Bank</label>
+                            <select id="bank-select" class="form-select">
+                                <option value="">--Select Bank--</option>
+                                <option value="sbi">State Bank of India</option>
+                                <option value="hdfc">HDFC Bank</option>
+                                <option value="icici">ICICI Bank</option>
+                                <option value="axis">Axis Bank</option>
+                                <option value="pnb">Punjab National Bank</option>
+                                <option value="other">Other Bank</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- UPI Details -->
+                    <div id="upi-details" class="payment-detail-section">
+                        <div class="mb-3">
+                            <label for="upi-id" class="form-label">UPI ID</label>
+                            <input type="text" id="upi-id" class="form-control" placeholder="name@upi">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.academic_year.label(class="form-label") }}
+                        {{ form.academic_year(class="form-control", placeholder="e.g., 2023-2024") }}
+                        {% if form.academic_year.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.academic_year.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.semester.label(class="form-label") }}
+                        {{ form.semester(class="form-control", placeholder="e.g., Spring 2023") }}
+                        {% if form.semester.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.semester.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control", placeholder="e.g., Bus fee payment for Spring 2023") }}
+                        {% if form.description.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.description.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary" id="payment-button">
+                            <i class="fas fa-money-bill-wave me-1"></i> Make Payment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Payment History -->
+    <div class="col-md-7 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Payment History</h5>
+            </div>
+            <div class="card-body">
+                {% if payments %}
+                <div class="table-responsive">
+                    <table class="table table-hover" id="payment-history-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Method</th>
+                                <th>Description</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payments %}
+                            <tr data-payment-id="{{ payment.id }}">
+                                <td>{{ payment.payment_date.strftime('%d/%m/%Y') }}</td>
+                                <td>₹{{ payment.amount }}</td>
+                                <td>{{ payment.payment_method|replace('_', ' ')|capitalize }}</td>
+                                <td>{{ payment.description }}</td>
+                                <td class="payment-status">{{ payment.payment_status|capitalize }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No payment history available.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Fee Information -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Fee Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="accordion" id="feeInfoAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingOne">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                Bus Fee Structure
+                            </button>
+                        </h2>
+                        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#feeInfoAccordion">
+                            <div class="accordion-body">
+                                <p>The bus fee is calculated based on the distance of your location from the college:</p>
+                                <ul>
+                                    <li>0-5 km: ₹5,000 per semester</li>
+                                    <li>5-10 km: ₹6,000 per semester</li>
+                                    <li>10-15 km: ₹7,000 per semester</li>
+                                    <li>15-20 km: ₹8,000 per semester</li>
+                                    <li>Above 20 km: ₹10,000 per semester</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingTwo">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                Payment Methods
+                            </button>
+                        </h2>
+                        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#feeInfoAccordion">
+                            <div class="accordion-body">
+                                <p>You can pay your bus fee using any of the following methods:</p>
+                                <ul>
+                                    <li><strong>Credit/Debit Card:</strong> Visa, MasterCard, RuPay</li>
+                                    <li><strong>Net Banking:</strong> All major banks supported</li>
+                                    <li><strong>UPI:</strong> GooglePay, PhonePe, BHIM, Paytm</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingThree">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                Late Fee Policy
+                            </button>
+                        </h2>
+                        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#feeInfoAccordion">
+                            <div class="accordion-body">
+                                <p>A late fee will be applied if payment is not made by the due date:</p>
+                                <ul>
+                                    <li>1-15 days late: ₹500</li>
+                                    <li>16-30 days late: ₹1,000</li>
+                                    <li>More than 30 days late: ₹2,000</li>
+                                </ul>
+                                <p><strong>Note:</strong> Bus service may be suspended if payment is more than 30 days late.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/payment.js') }}"></script>
+{% endblock %}

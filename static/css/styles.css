@@ -1,0 +1,289 @@
+/* Main Styles */
+:root {
+  --main-bg-color: #212529;
+  --main-text-color: #f8f9fa;
+  --primary-color: #0d6efd;
+  --secondary-color: #6c757d;
+  --success-color: #198754;
+  --danger-color: #dc3545;
+  --warning-color: #ffc107;
+  --info-color: #0dcaf0;
+  --border-radius: 0.25rem;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  padding-top: 60px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+}
+
+/* Card styles */
+.card {
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.card-header {
+  font-weight: bold;
+}
+
+/* Dashboard stats */
+.stat-card {
+  text-align: center;
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.stat-card .stat-icon {
+  position: absolute;
+  top: -15px;
+  right: -15px;
+  font-size: 5rem;
+  opacity: 0.2;
+}
+
+.stat-card .stat-value {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.stat-card .stat-title {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* QR Scanner Styles */
+#qr-reader {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.qr-controls {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+#loading-indicator {
+  display: none;
+  text-align: center;
+  margin: 20px 0;
+}
+
+.manual-input-container {
+  margin: 20px 0;
+  padding: 15px;
+  border: 1px solid var(--secondary-color);
+  border-radius: var(--border-radius);
+  background-color: rgba(108, 117, 125, 0.1);
+}
+
+/* Notification styles */
+.notification-item {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-left: 5px solid var(--info-color);
+  border-radius: var(--border-radius);
+  background-color: rgba(13, 202, 240, 0.1);
+  transition: all 0.3s ease;
+}
+
+.notification-item.unread {
+  border-left-color: var(--primary-color);
+  background-color: rgba(13, 110, 253, 0.1);
+}
+
+.notification-item.read {
+  opacity: 0.7;
+}
+
+.notification-timestamp {
+  font-size: 0.8rem;
+  color: var(--secondary-color);
+}
+
+.notification-title {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+/* Payment form styles */
+.payment-detail-section {
+  display: none;
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid var(--info-color);
+  border-radius: var(--border-radius);
+  background-color: rgba(13, 202, 240, 0.1);
+}
+
+/* Student details styles */
+.student-detail-card {
+  margin-bottom: 1.5rem;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.profile-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin-right: 1rem;
+}
+
+.profile-info {
+  flex: 1;
+}
+
+.profile-name {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+.profile-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-label {
+  font-size: 0.85rem;
+  color: var(--secondary-color);
+  margin-bottom: 0.25rem;
+}
+
+.detail-value {
+  font-weight: 500;
+}
+
+/* Bus entry table */
+.entry-table th {
+  position: sticky;
+  top: 0;
+  background-color: var(--primary-color);
+  color: white;
+}
+
+/* Card request styles */
+.request-item {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: var(--border-radius);
+  background-color: rgba(108, 117, 125, 0.1);
+}
+
+.request-item.pending {
+  border-left: 5px solid var(--warning-color);
+}
+
+.request-item.approved {
+  border-left: 5px solid var(--success-color);
+}
+
+.request-item.rejected {
+  border-left: 5px solid var(--danger-color);
+}
+
+.request-date {
+  font-size: 0.8rem;
+  color: var(--secondary-color);
+}
+
+.request-type {
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+/* Location table */
+.location-table .fee-amount {
+  font-weight: bold;
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+  .stat-card {
+    margin-bottom: 1rem;
+  }
+  
+  .profile-details {
+    grid-template-columns: 1fr;
+  }
+  
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .profile-avatar {
+    margin-right: 0;
+    margin-bottom: 1rem;
+  }
+}
+
+/* Status badge colors */
+.status-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.status-badge.active, .status-badge.paid {
+  background-color: rgba(25, 135, 84, 0.1);
+  color: var(--success-color);
+  border: 1px solid var(--success-color);
+}
+
+.status-badge.pending {
+  background-color: rgba(255, 193, 7, 0.1);
+  color: var(--warning-color);
+  border: 1px solid var(--warning-color);
+}
+
+.status-badge.inactive, .status-badge.overdue, .status-badge.cancelled, .status-badge.expired, .status-badge.failed {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: var(--danger-color);
+  border: 1px solid var(--danger-color);
+}
+
+/* Charts */
+.chart-container {
+  margin: 2rem 0;
+  height: 300px;
+}

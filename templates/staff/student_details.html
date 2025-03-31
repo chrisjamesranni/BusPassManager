@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Student Details | College Bus Card Management System{% endblock %}
+
+{% block heading %}Student Details{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4 student-detail-card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Student Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        {{ student.first_name[0] }}{{ student.last_name[0] }}
+                    </div>
+                    <div class="profile-info">
+                        <h4 class="profile-name">{{ student.first_name }} {{ student.last_name }}</h4>
+                        <p>{{ profile.student_id }}</p>
+                    </div>
+                </div>
+                
+                <div class="profile-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Department</span>
+                        <span class="detail-value">{{ profile.department or 'Not Set' }}</span>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <span class="detail-label">Year & Semester</span>
+                        <span class="detail-value">Year {{ profile.year or 'Not Set' }}, Semester {{ profile.semester or 'Not Set' }}</span>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <span class="detail-label">Email</span>
+                        <span class="detail-value">{{ student.email }}</span>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <span class="detail-label">Phone</span>
+                        <span class="detail-value">{{ student.phone or 'Not Set' }}</span>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">Card Status</h6>
+                                <span class="status-badge {{ profile.card_status }}">{{ profile.card_status|capitalize }}</span>
+                                <p class="mt-2 mb-0">Card #: {{ profile.card_number or 'Not Assigned' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">Fee Status</h6>
+                                <span class="status-badge {{ profile.fee_status }}">{{ profile.fee_status|capitalize }}</span>
+                                {% if profile.fee_due_date %}
+                                <p class="mt-2 mb-0">Due Date: {{ profile.fee_due_date.strftime('%d/%m/%Y') }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">Location</h6>
+                                <p class="mb-1">{{ profile.location.name if profile.location else 'Not Assigned' }}</p>
+                                {% if profile.location %}
+                                <p class="mb-0"><small>Distance: {{ profile.location.distance }} km</small></p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title">Financial Information</h6>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span>Base Fee:</span>
+                                    <span>₹{{ profile.location.fee_amount if profile.location else '0.00' }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span>Current Dues:</span>
+                                    <span class="{% if profile.current_dues > 0 %}text-danger{% endif %}">₹{{ profile.current_dues or '0.00' }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>Fine Amount:</span>
+                                    <span class="{% if profile.fine_amount > 0 %}text-danger{% endif %}">₹{{ profile.fine_amount or '0.00' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title">Verification Result</h6>
+                                {% set is_valid = profile.card_status == 'active' and profile.fee_status == 'paid' %}
+                                {% set is_warning = profile.card_status == 'active' and profile.fee_status != 'paid' %}
+                                
+                                <div class="alert {% if is_valid %}alert-success{% elif is_warning %}alert-warning{% else %}alert-danger{% endif %} mb-0">
+                                    <h4 class="text-center mb-0">
+                                        {% if is_valid %}
+                                        <i class="fas fa-check-circle me-2"></i> VALID
+                                        {% elif is_warning %}
+                                        <i class="fas fa-exclamation-triangle me-2"></i> WARNING
+                                        {% else %}
+                                        <i class="fas fa-times-circle me-2"></i> INVALID
+                                        {% endif %}
+                                    </h4>
+                                </div>
+                                
+                                <div class="mt-3">
+                                    {% if not is_valid %}
+                                    <p class="text-danger mb-0">
+                                        {% if profile.card_status != 'active' %}
+                                        Card is not active.
+                                        {% endif %}
+                                        
+                                        {% if profile.fee_status != 'paid' %}
+                                        Student has not paid the bus fee.
+                                        {% endif %}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 mt-4">
+                    <a href="{{ url_for('staff.scan') }}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Scanner
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

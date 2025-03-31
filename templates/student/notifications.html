@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications | College Bus Card Management System{% endblock %}
+
+{% block heading %}My Notifications{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">All Notifications</h5>
+    </div>
+    <div class="card-body">
+        {% if notifications %}
+        <div class="notification-list">
+            {% for notification in notifications %}
+            <div id="notification-{{ notification.id }}" class="notification-item {% if notification.is_read %}read{% else %}unread{% endif %}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="notification-title">{{ notification.title }}</h5>
+                        <span class="notification-timestamp">{{ notification.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                    </div>
+                    
+                    <span class="badge 
+                        {% if notification.notification_type == 'payment' %}bg-success
+                        {% elif notification.notification_type == 'card' %}bg-primary
+                        {% else %}bg-info{% endif %}">
+                        {{ notification.notification_type|capitalize }}
+                    </span>
+                </div>
+                
+                <div class="notification-content mt-2">
+                    <p>{{ notification.message }}</p>
+                </div>
+                
+                {% if not notification.is_read %}
+                <div class="mt-2">
+                    <button class="btn btn-sm btn-outline-secondary mark-read-btn" data-id="{{ notification.id }}">
+                        Mark as Read
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <div class="mb-3">
+                <i class="fas fa-bell-slash fa-3x text-muted"></i>
+            </div>
+            <h5>No Notifications</h5>
+            <p class="text-muted">You don't have any notifications at the moment.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

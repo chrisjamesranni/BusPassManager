@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Student Fees | College Bus Card Management System{% endblock %}
+
+{% block heading %}
+{% if update_student %}Update Fee Status: {{ student.first_name }} {{ student.last_name }}{% else %}Manage Student Fees{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if update_student %}
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Update Fee Status</h5>
+    </div>
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6>Student Information</h6>
+                <p><strong>Name:</strong> {{ student.first_name }} {{ student.last_name }}</p>
+                <p><strong>ID:</strong> {{ profile.student_id }}</p>
+                <p><strong>Department:</strong> {{ profile.department or 'Not Set' }}</p>
+                <p><strong>Year:</strong> {{ profile.year or 'Not Set' }}, <strong>Semester:</strong> {{ profile.semester or 'Not Set' }}</p>
+            </div>
+            <div class="col-md-6">
+                <h6>Current Fee Details</h6>
+                <p><strong>Location:</strong> {{ profile.location.name if profile.location else 'Not Set' }}</p>
+                <p><strong>Current Fee Status:</strong> <span class="badge {% if profile.fee_status == 'paid' %}bg-success{% elif profile.fee_status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">{{ profile.fee_status|capitalize }}</span></p>
+                <p><strong>Current Dues:</strong> ₹{{ profile.current_dues or '0.00' }}</p>
+                <p><strong>Fine Amount:</strong> ₹{{ profile.fine_amount or '0.00' }}</p>
+            </div>
+        </div>
+        
+        <form method="POST" action="{{ url_for('accountant.update_student_fee', profile_id=profile.id) }}">
+            {{ form.hidden_tag() }}
+            
+            <div class="mb-3">
+                {{ form.fee_status.label(class="form-label") }}
+                {{ form.fee_status(class="form-select") }}
+                {% if form.fee_status.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.fee_status.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.current_dues.label(class="form-label") }}
+                {{ form.current_dues(class="form-control", type="number", step="0.01") }}
+                {% if form.current_dues.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.current_dues.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.fine_amount.label(class="form-label") }}
+                {{ form.fine_amount(class="form-control", type="number", step="0.01") }}
+                {% if form.fine_amount.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.fine_amount.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="d-grid gap-2">
+                {{ form.submit(class="btn btn-primary") }}
+                <a href="{{ url_for('accountant.students') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% else %}
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Student Fee Status</h5>
+    </div>
+    <div class="card-body">
+        <!-- Search/Filter Form -->
+        <div class="row mb-4">
+            <div class="col-md-6 offset-md-6">
+                <div class="input-group">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search by name or ID...">
+                    <button class="btn btn-outline-secondary" type="button" id="clearSearch">Clear</button>
+                </div>
+            </div>
+        </div>
+        
+        {% if profiles %}
+        <div class="table-responsive">
+            <table class="table table-hover" id="studentsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Location</th>
+                        <th>Fee Status</th>
+                        <th>Current Dues</th>
+                        <th>Fine</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for profile in profiles %}
+                    <tr>
+                        <td>{{ profile.student_id }}</td>
+                        <td>{{ profile.user.first_name }} {{ profile.user.last_name }}</td>
+                        <td>{{ profile.department or 'Not Set' }}</td>
+                        <td>{{ profile.location.name if profile.location else 'Not Set' }}</td>
+                        <td>
+                            <span class="badge {% if profile.fee_status == 'paid' %}bg-success{% elif profile.fee_status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ profile.fee_status|capitalize }}
+                            </span>
+                        </td>
+                        <td>₹{{ profile.current_dues or '0.00' }}</td>
+                        <td>₹{{ profile.fine_amount or '0.00' }}</td>
+                        <td>
+                            <a href="{{ url_for('accountant.update_student_fee', profile_id=profile.id) }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-edit"></i> Update
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No student profiles found.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const clearSearchBtn = document.getElementById('clearSearch');
+        const table = document.getElementById('studentsTable');
+        const rows = table.querySelectorAll('tbody tr');
+        
+        function filterTable(query) {
+            const lowerQuery = query.toLowerCase();
+            
+            rows.forEach(row => {
+                const id = row.cells[0].textContent.toLowerCase();
+                const name = row.cells[1].textContent.toLowerCase();
+                
+                if (id.includes(lowerQuery) || name.includes(lowerQuery)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                filterTable(this.value);
+            });
+        }
+        
+        if (clearSearchBtn) {
+            clearSearchBtn.addEventListener('click', function() {
+                searchInput.value = '';
+                rows.forEach(row => {
+                    row.style.display = '';
+                });
+            });
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

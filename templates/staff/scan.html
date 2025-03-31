@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Scan QR Code | College Bus Card Management System{% endblock %}
+
+{% block heading %}
+{% if view_entries %}Recent Bus Entries{% elif view_stats %}Entry Statistics{% else %}Scan Student QR Code{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if not view_entries and not view_stats %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">QR Code Scanner</h5>
+            </div>
+            <div class="card-body">
+                <div id="qr-reader" class="mb-3"></div>
+                
+                <div class="qr-controls">
+                    <button id="start-scan" class="btn btn-primary">
+                        <i class="fas fa-qrcode me-1"></i> Start Scanner
+                    </button>
+                    <button id="stop-scan" class="btn btn-secondary" style="display: none;">
+                        <i class="fas fa-stop me-1"></i> Stop Scanner
+                    </button>
+                </div>
+                
+                <div class="manual-input-container">
+                    <h6>Manual Entry</h6>
+                    <div class="input-group mb-3">
+                        <input type="text" id="manual-input" class="form-control" placeholder="Enter Student ID">
+                        <button class="btn btn-outline-primary" type="button" id="manual-submit">Check</button>
+                    </div>
+                </div>
+                
+                <form id="scan-form" method="POST" action="{{ url_for('staff.scan') }}">
+                    {{ form.hidden_tag() }}
+                    {{ form.student_id(id="student_id") }}
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Scan Result</h5>
+            </div>
+            <div class="card-body">
+                <div id="loading-indicator">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Processing student information...</p>
+                </div>
+                <div id="scan-result">
+                    <div class="text-center">
+                        <p class="text-muted">Scan a student QR code or enter a student ID manually to see the result here.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if view_entries %}
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Recent Bus Entries</h5>
+    </div>
+    <div class="card-body">
+        {% if entries %}
+        <div class="table-responsive">
+            <table class="table table-hover entry-table">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Student</th>
+                        <th>Student ID</th>
+                        <th>Bus Number</th>
+                        <th>Route</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in entries %}
+                    <tr>
+                        <td>{{ entry.entry_time.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>{{ entry.student_profile.user.first_name }} {{ entry.student_profile.user.last_name }}</td>
+                        <td>{{ entry.student_profile.student_id }}</td>
+                        <td>{{ entry.bus_number }}</td>
+                        <td>{{ entry.route }}</td>
+                        <td>
+                            <span class="badge {% if entry.student_profile.card_status == 'active' and entry.student_profile.fee_status == 'paid' %}bg-success{% elif entry.student_profile.card_status == 'active' %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ 'Valid' if entry.student_profile.card_status == 'active' and entry.student_profile.fee_status == 'paid' else 'Warning' if entry.student_profile.card_status == 'active' else 'Invalid' }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No recent entries found. Start scanning QR codes to record entries.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% if view_stats %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="stat-card bg-primary text-white">
+            <div class="stat-icon">
+                <i class="fas fa-calendar-day"></i>
+            </div>
+            <div class="stat-value">{{ today_entries }}</div>
+            <div class="stat-title">Today's Entries</div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="stat-card bg-success text-white">
+            <div class="stat-icon">
+                <i class="fas fa-calendar-week"></i>
+            </div>
+            <div class="stat-value">{{ week_entries }}</div>
+            <div class="stat-title">This Week's Entries</div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="stat-card bg-info text-white">
+            <div class="stat-icon">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div class="stat-value">{{ month_entries }}</div>
+            <div class="stat-title">This Month's Entries</div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Entry Activity Summary</h5>
+    </div>
+    <div class="card-body">
+        <p class="mb-0">
+            You have checked <strong>{{ today_entries }}</strong> student bus cards today, 
+            <strong>{{ week_entries }}</strong> this week, and 
+            <strong>{{ month_entries }}</strong> this month.
+        </p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/qrscanner.js') }}"></script>
+{% endblock %}

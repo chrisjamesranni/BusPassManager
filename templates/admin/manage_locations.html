@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Locations | College Bus Card Management System{% endblock %}
+
+{% block heading %}
+{% if form and not location %}Add New Location{% elif form and location %}Edit Location{% else %}Manage Locations{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if form %}
+<!-- Location Form -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">{% if location %}Edit Location: {{ location.name }}{% else %}Add New Location{% endif %}</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{% if location %}{{ url_for('admin.edit_location', location_id=location.id) }}{% else %}{{ url_for('admin.new_location') }}{% endif %}">
+            {{ form.hidden_tag() }}
+            
+            <div class="mb-3">
+                {{ form.name.label(class="form-label") }}
+                {{ form.name(class="form-control", placeholder="Location Name") }}
+                {% if form.name.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.name.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.address.label(class="form-label") }}
+                {{ form.address(class="form-control", placeholder="Address") }}
+                {% if form.address.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.address.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.distance.label(class="form-label") }}
+                    {{ form.distance(class="form-control", type="number", step="0.1", placeholder="Distance in km") }}
+                    {% if form.distance.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.distance.errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="col-md-6">
+                    {{ form.fee_amount.label(class="form-label") }}
+                    {{ form.fee_amount(class="form-control", type="number", step="0.01", placeholder="Fee amount") }}
+                    {% if form.fee_amount.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.fee_amount.errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mb-3 form-check">
+                {{ form.is_active(class="form-check-input") }}
+                {{ form.is_active.label(class="form-check-label") }}
+            </div>
+            
+            <div class="d-grid gap-2">
+                {{ form.submit(class="btn btn-primary") }}
+                <a href="{{ url_for('admin.locations') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% else %}
+<!-- Locations Table -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Locations</h5>
+        <a href="{{ url_for('admin.new_location') }}" class="btn btn-sm btn-light">
+            <i class="fas fa-plus me-1"></i> Add Location
+        </a>
+    </div>
+    <div class="card-body">
+        {% if locations %}
+        <div class="table-responsive">
+            <table class="table table-hover location-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Address</th>
+                        <th>Distance (km)</th>
+                        <th>Fee Amount</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for location in locations %}
+                    <tr>
+                        <td>{{ location.name }}</td>
+                        <td>{{ location.address }}</td>
+                        <td>{{ location.distance }}</td>
+                        <td class="fee-amount">₹{{ location.fee_amount }}</td>
+                        <td>
+                            <span class="badge {% if location.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ 'Active' if location.is_active else 'Inactive' }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('admin.edit_location', location_id=location.id) }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ location.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Delete Confirmation Modal -->
+                            <div class="modal fade" id="deleteModal{{ location.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ location.id }}" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="deleteModalLabel{{ location.id }}">Confirm Delete</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            Are you sure you want to delete <strong>{{ location.name }}</strong>? This action cannot be undone.
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <form action="{{ url_for('admin.delete_location', location_id=location.id) }}" method="POST">
+                                                <button type="submit" class="btn btn-danger">Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No locations found. <a href="{{ url_for('admin.new_location') }}">Add your first location</a></p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

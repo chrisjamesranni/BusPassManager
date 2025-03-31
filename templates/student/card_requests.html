@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Card Requests | College Bus Card Management System{% endblock %}
+
+{% block heading %}Bus Card Requests{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- New Request Form -->
+    <div class="col-md-5 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Request a Card</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('student.card_requests') }}" id="card-request-form">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.request_type.label(class="form-label") }}
+                        {{ form.request_type(class="form-select") }}
+                        {% if form.request_type.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.request_type.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.reason.label(class="form-label") }}
+                        {{ form.reason(class="form-control", rows=5, placeholder="Please explain why you are requesting this card action...") }}
+                        {% if form.reason.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.reason.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Request History -->
+    <div class="col-md-7 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Request History</h5>
+            </div>
+            <div class="card-body">
+                {% if requests %}
+                <div class="request-list">
+                    {% for request in requests %}
+                    <div class="request-item {{ request.status }}">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="request-type">{{ request.request_type|capitalize }} Card Request</span>
+                            <span class="request-date">{{ request.request_date.strftime('%d/%m/%Y') }}</span>
+                        </div>
+                        
+                        <p class="mb-2"><strong>Reason:</strong> {{ request.reason }}</p>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge {% if request.status == 'pending' %}bg-warning{% elif request.status == 'approved' %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ request.status|capitalize }}
+                            </span>
+                            
+                            {% if request.status != 'pending' and request.approval_date %}
+                            <small class="text-muted">
+                                {{ 'Approved' if request.status == 'approved' else 'Rejected' }} on 
+                                {{ request.approval_date.strftime('%d/%m/%Y') }}
+                            </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center">You haven't made any card requests yet.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Card Info -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Card Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="accordion" id="cardInfoAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingOne">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                New Card Request
+                            </button>
+                        </h2>
+                        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#cardInfoAccordion">
+                            <div class="accordion-body">
+                                <p>Request a new bus card if you're a new student or don't have a card yet. Your request will be reviewed by an administrator.</p>
+                                <p><strong>Processing Time:</strong> 1-2 business days</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingTwo">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                Cancel Card Request
+                            </button>
+                        </h2>
+                        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#cardInfoAccordion">
+                            <div class="accordion-body">
+                                <p>Request to cancel your existing bus card if you no longer need bus services (e.g., moving to a different location).</p>
+                                <p><strong>Note:</strong> Any unused fee balance may be refunded as per college policy.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingThree">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                Replace Card Request
+                            </button>
+                        </h2>
+                        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#cardInfoAccordion">
+                            <div class="accordion-body">
+                                <p>Request a replacement card if your card is lost, damaged, or stolen.</p>
+                                <p><strong>Replacement Fee:</strong> A fee of ₹100 may apply for card replacement.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

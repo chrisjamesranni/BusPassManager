@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard | College Bus Card Management System{% endblock %}
+
+{% block heading %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<!-- Dashboard Statistics -->
+{% if not view_requests and not view_profiles and not send_notification and not edit_profile %}
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card bg-primary text-white">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-value">{{ total_students }}</div>
+            <div class="stat-title">Total Students</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card bg-success text-white">
+            <div class="stat-icon">
+                <i class="fas fa-id-card"></i>
+            </div>
+            <div class="stat-value">{{ active_cards }}</div>
+            <div class="stat-title">Active Cards</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card bg-warning text-white">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-value">{{ pending_requests }}</div>
+            <div class="stat-title">Pending Requests</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card bg-info text-white">
+            <div class="stat-icon">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div class="stat-value">₹{{ total_fees_collected|round(2) }}</div>
+            <div class="stat-title">Total Fees Collected</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Payment Chart -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Monthly Payment Collections</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="adminPaymentChart" data-payments="{{ payment_months|tojson }}"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Card Requests -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Recent Card Requests</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_requests %}
+                <div class="list-group">
+                    {% for request in recent_requests %}
+                    <div class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ request.user.first_name }} {{ request.user.last_name }}</h6>
+                            <small>{{ request.request_date.strftime('%d/%m/%Y') }}</small>
+                        </div>
+                        <p class="mb-1">{{ request.request_type|capitalize }} Card Request</p>
+                        <small class="badge {% if request.status == 'pending' %}bg-warning{% elif request.status == 'approved' %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ request.status|capitalize }}
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="mt-3">
+                    <a href="{{ url_for('admin.card_requests') }}" class="btn btn-sm btn-outline-primary">View All Requests</a>
+                </div>
+                {% else %}
+                <p class="text-muted">No recent card requests.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Card Requests View -->
+{% if view_requests %}
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Card Requests</h5>
+    </div>
+    <div class="card-body">
+        {% if card_requests %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Request Type</th>
+                        <th>Reason</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request in card_requests %}
+                    <tr>
+                        <td>{{ request.user.first_name }} {{ request.user.last_name }}</td>
+                        <td>{{ request.request_type|capitalize }}</td>
+                        <td>{{ request.reason }}</td>
+                        <td>{{ request.request_date.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <span class="badge {% if request.status == 'pending' %}bg-warning{% elif request.status == 'approved' %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ request.status|capitalize }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if request.status == 'pending' %}
+                            <div class="btn-group" role="group">
+                                <form method="POST" action="{{ url_for('admin.handle_card_request', request_id=request.id, action='approve') }}" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                </form>
+                                <form method="POST" action="{{ url_for('admin.handle_card_request', request_id=request.id, action='reject') }}" class="d-inline ms-1">
+                                    <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                                </form>
+                            </div>
+                            {% else %}
+                            <span class="text-muted">No actions available</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No card requests found.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Student Profiles View -->
+{% if view_profiles %}
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Student Profiles</h5>
+    </div>
+    <div class="card-body">
+        {% if profiles %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Location</th>
+                        <th>Card Status</th>
+                        <th>Fee Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for profile in profiles %}
+                    <tr>
+                        <td>{{ profile.student_id }}</td>
+                        <td>{{ profile.user.first_name }} {{ profile.user.last_name }}</td>
+                        <td>{{ profile.department or 'Not Set' }}</td>
+                        <td>{{ profile.location.name if profile.location else 'Not Set' }}</td>
+                        <td>
+                            <span class="badge {% if profile.card_status == 'active' %}bg-success{% elif profile.card_status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ profile.card_status|capitalize }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge {% if profile.fee_status == 'paid' %}bg-success{% elif profile.fee_status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ profile.fee_status|capitalize }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin.edit_student_profile', profile_id=profile.id) }}" class="btn btn-sm btn-primary">Edit</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No student profiles found.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Send Notification Form -->
+{% if send_notification %}
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Send Notification</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('admin.notifications') }}">
+            {{ form.hidden_tag() }}
+            
+            <div class="mb-3">
+                {{ form.title.label(class="form-label") }}
+                {{ form.title(class="form-control", placeholder="Notification Title") }}
+                {% if form.title.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.title.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.message.label(class="form-label") }}
+                {{ form.message(class="form-control", rows=4, placeholder="Notification Message") }}
+                {% if form.message.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.message.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.notification_type.label(class="form-label") }}
+                {{ form.notification_type(class="form-select") }}
+                {% if form.notification_type.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.notification_type.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3 form-check">
+                {{ form.all_users(class="form-check-input") }}
+                {{ form.all_users.label(class="form-check-label") }}
+            </div>
+            
+            <div class="mb-3" id="user-select-div">
+                {{ form.user_id.label(class="form-label") }}
+                {{ form.user_id(class="form-select") }}
+                {% if form.user_id.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.user_id.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="d-grid gap-2">
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const allUsersCheckbox = document.getElementById('all_users');
+        const userSelectDiv = document.getElementById('user-select-div');
+        
+        function toggleUserSelect() {
+            if (allUsersCheckbox.checked) {
+                userSelectDiv.style.display = 'none';
+            } else {
+                userSelectDiv.style.display = 'block';
+            }
+        }
+        
+        allUsersCheckbox.addEventListener('change', toggleUserSelect);
+        toggleUserSelect(); // Initial state
+    });
+</script>
+{% endif %}
+
+<!-- Edit Student Profile Form -->
+{% if edit_profile %}
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Edit Student Profile: {{ profile.user.first_name }} {{ profile.user.last_name }}</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('admin.edit_student_profile', profile_id=profile.id) }}">
+            {{ form.hidden_tag() }}
+            
+            <div class="mb-3">
+                {{ form.student_id.label(class="form-label") }}
+                {{ form.student_id(class="form-control", value=profile.student_id, readonly=true) }}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.card_status.label(class="form-label") }}
+                {{ form.card_status(class="form-select") }}
+                {% if form.card_status.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.card_status.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.fee_status.label(class="form-label") }}
+                {{ form.fee_status(class="form-select") }}
+                {% if form.fee_status.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.fee_status.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.current_dues.label(class="form-label") }}
+                {{ form.current_dues(class="form-control", type="number", step="0.01") }}
+                {% if form.current_dues.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.current_dues.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.fine_amount.label(class="form-label") }}
+                {{ form.fine_amount(class="form-control", type="number", step="0.01") }}
+                {% if form.fine_amount.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.fine_amount.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="d-grid gap-2">
+                {{ form.submit(class="btn btn-primary") }}
+                <a href="{{ url_for('admin.student_profiles') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
