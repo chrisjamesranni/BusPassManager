@@ -1,5 +1,6 @@
 import os
 import logging
+from datetime import datetime
 
 from flask import Flask, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
@@ -81,5 +82,10 @@ app.register_blueprint(accountant_bp, url_prefix='/accountant')
 @app.route('/')
 def index():
     return redirect(url_for('auth.login'))
+
+# Add context processor to make 'now' available in all templates
+@app.context_processor
+def inject_now():
+    return {'now': datetime.now()}
 
 logger.info("Application initialized successfully")
