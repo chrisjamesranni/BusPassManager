@@ -1,9 +1,9 @@
 from datetime import datetime
 from flask_login import UserMixin
-from app import db
 from sqlalchemy import Column, Integer, String, Boolean, Float, DateTime, ForeignKey, Text, Enum
 from sqlalchemy.orm import relationship
 import enum
+from extension import db
 
 class Role(enum.Enum):
     admin = "admin"

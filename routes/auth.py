@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import check_password_hash, generate_password_hash
-from app import db
-from models import User, StudentProfile
+from extension import db
+from my_models import User, StudentProfile
 from forms import LoginForm, RegistrationForm, ChangePasswordForm
 from datetime import datetime
 

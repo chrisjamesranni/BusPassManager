@@ -1,22 +1,13 @@
 import os
 import logging
 from datetime import datetime
-
 from flask import Flask, redirect, url_for
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
-from flask_login import LoginManager
+from extension import db, login_manager  # Import db from extensions.py
+from my_models import User
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-
-class Base(DeclarativeBase):
-    pass
-
-# Initialize extensions
-db = SQLAlchemy(model_class=Base)
-login_manager = LoginManager()
 
 # Create the app
 app = Flask(__name__)
@@ -36,15 +27,13 @@ login_manager.init_app(app)
 login_manager.login_view = 'auth.login'
 login_manager.login_message_category = 'info'
 
-# Import models and create tables
+# Import models **AFTER** db.init_app()
 with app.app_context():
-    import models
-    from models import User
-    
+
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
-    
+
     db.create_all()
     logger.info("Database tables created")
 
@@ -78,14 +67,14 @@ app.register_blueprint(staff_bp, url_prefix='/staff')
 app.register_blueprint(student_bp, url_prefix='/student')
 app.register_blueprint(accountant_bp, url_prefix='/accountant')
 
-# Add a root route that redirects to login
 @app.route('/')
 def index():
     return redirect(url_for('auth.login'))
 
-# Add context processor to make 'now' available in all templates
 @app.context_processor
 def inject_now():
     return {'now': datetime.now()}
 
 logger.info("Application initialized successfully")
+if __name__ == '__main__':
+    app.run(debug=True)

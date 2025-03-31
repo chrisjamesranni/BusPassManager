@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from werkzeug.security import generate_password_hash
-from app import db
-from models import User, Location, StudentProfile, CardRequest, Notification, Payment
+from extension import db
+from my_models import User, Location, StudentProfile, CardRequest, Notification, Payment
 from forms import UserForm, LocationForm, NotificationForm, UpdateCardStatusForm
 from sqlalchemy import func
 import datetime
