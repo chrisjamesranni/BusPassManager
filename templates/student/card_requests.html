@@ -13,6 +13,28 @@
                 <h5 class="mb-0">Request a Card</h5>
             </div>
             <div class="card-body">
+                {% if has_pending_request %}
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-info-circle me-2"></i> You already have a pending card request. Please wait for it to be processed.
+                </div>
+                {% endif %}
+                
+                {% if has_active_card %}
+                <div class="card mb-3 bg-light">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">Current Card Information</h6>
+                        <p class="mb-1"><strong>Card Status:</strong> 
+                            <span class="badge bg-success">Active</span>
+                        </p>
+                        <p class="mb-1"><strong>Card Number:</strong> {{ profile.card_number }}</p>
+                        <div class="alert alert-warning mt-2 mb-0 small">
+                            <i class="fas fa-exclamation-triangle me-1"></i> 
+                            You already have an active card. If you need a new card, please request to cancel or replace your current card.
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
                 <form method="POST" action="{{ url_for('student.card_requests') }}" id="card-request-form">
                     {{ form.hidden_tag() }}
                     
@@ -26,6 +48,13 @@
                             {% endfor %}
                         </div>
                         {% endif %}
+                        <div class="form-text small text-muted">
+                            {% if has_active_card %}
+                            <i class="fas fa-info-circle me-1"></i> With an active card, you can request to cancel or replace your current card.
+                            {% else %}
+                            <i class="fas fa-info-circle me-1"></i> You can request a new card since you don't have an active one.
+                            {% endif %}
+                        </div>
                     </div>
                     
                     <div class="mb-3">
@@ -41,7 +70,7 @@
                     </div>
                     
                     <div class="d-grid gap-2">
-                        {{ form.submit(class="btn btn-primary") }}
+                        {{ form.submit(class="btn btn-primary", disabled=has_pending_request) }}
                     </div>
                 </form>
             </div>

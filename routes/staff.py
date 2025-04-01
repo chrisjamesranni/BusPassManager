@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from extension import db
-from my_models import User, StudentProfile, BusEntry
-from forms import QRScanForm
+from my_models import User, StudentProfile, BusEntry, Location
+from forms import QRScanForm, UpdateCardStatusForm, UserForm, StudentProfileForm
+from werkzeug.security import generate_password_hash
 import datetime
 
 staff_bp = Blueprint('staff', __name__)
@@ -138,3 +139,52 @@ def entry_stats():
         month_entries=month_entries,
         view_stats=True
     )
+
+@staff_bp.route('/add-student', methods=['GET', 'POST'])
+@login_required
+@staff_required
+def add_student():
+    """Add a new student to the system"""
+    user_form = UserForm()
+    profile_form = StudentProfileForm()
+    
+    # Get all available locations for the dropdown
+    locations = Location.query.filter_by(is_active=True).all()
+    profile_form.location_id.choices = [(l.id, l.name) for l in locations]
+    
+    if user_form.validate_on_submit() and profile_form.validate_on_submit():
+        # First create the user
+        hashed_password = generate_password_hash(user_form.password.data)
+        user = User(
+            username=user_form.username.data,
+            email=user_form.email.data,
+            password_hash=hashed_password,
+            first_name=user_form.first_name.data,
+            last_name=user_form.last_name.data,
+            phone=user_form.phone.data,
+            role='student',
+            is_active=True
+        )
+        db.session.add(user)
+        db.session.commit()
+        
+        # Then create the student profile
+        student_profile = StudentProfile(
+            user_id=user.id,
+            student_id=profile_form.student_id.data,
+            department=profile_form.department.data,
+            year=profile_form.year.data,
+            semester=profile_form.semester.data,
+            location_id=profile_form.location_id.data,
+            card_status='pending'  # New students start with pending card status
+        )
+        db.session.add(student_profile)
+        db.session.commit()
+        
+        flash('Student added successfully!', 'success')
+        return redirect(url_for('staff.check_student', student_id=student_profile.student_id))
+    
+    return render_template('staff/add_student.html', 
+                          user_form=user_form, 
+                          profile_form=profile_form,
+                          title='Add New Student')

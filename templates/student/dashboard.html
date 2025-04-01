@@ -21,6 +21,39 @@
                     <p class="text-muted">{{ profile.student_id }}</p>
                 </div>
                 
+                <div class="student-info mb-3">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>Username:</strong>
+                            <span>{{ current_user.username }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>Email:</strong>
+                            <span>{{ current_user.email }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>Account Created:</strong>
+                            <span>{{ current_user.created_at.strftime('%d/%m/%Y') }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>Department:</strong>
+                            <span>{{ profile.department or 'Not set' }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>Year & Semester:</strong>
+                            <span>Year {{ profile.year or 'N/A' }}, Sem {{ profile.semester or 'N/A' }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>Location:</strong>
+                            <span>{{ profile.location.name if profile.location else 'Not set' }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>Address:</strong>
+                            <span>{{ profile.location.address if profile.location and profile.location.address else 'Not available' }}</span>
+                        </li>
+                    </ul>
+                </div>
+                
                 <div class="border-top pt-3">
                     <div class="row">
                         <div class="col-6 text-center">
@@ -52,31 +85,66 @@
                 <h5 class="mb-0">My Bus Card</h5>
             </div>
             <div class="card-body text-center">
-                {% if profile.card_status == 'active' %}
-                <div class="mb-3">
-                    <div id="qrcode"></div>
-                </div>
-                <p><strong>Card Number:</strong> {{ profile.card_number }}</p>
-                <p class="text-success"><i class="fas fa-check-circle"></i> Your card is active</p>
-                {% else %}
-                <div class="alert alert-warning mb-3">
-                    <i class="fas fa-exclamation-triangle"></i> 
-                    {% if profile.card_status == 'pending' %}
-                    Your card request is being processed.
-                    {% elif profile.card_status == 'inactive' %}
-                    You don't have an active bus card.
-                    {% elif profile.card_status == 'cancelled' %}
-                    Your card has been cancelled.
+                <div class="bus-card-status mb-3">
+                    {% if profile.card_status == 'active' %}
+                    <div class="card-info mb-3 border p-3 rounded bg-light">
+                        <div class="mb-3">
+                            <div id="qrcode"></div>
+                        </div>
+                        <p class="mb-1"><strong>Card Number:</strong> {{ profile.card_number }}</p>
+                        <p class="text-success mb-0"><i class="fas fa-check-circle"></i> Your card is active</p>
+                    </div>
+                    
+                    <div class="fee-info mb-3">
+                        <h6 class="card-subtitle mb-2">Fee Information</h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Fee Status:</span>
+                                <span class="badge {% if profile.fee_status == 'paid' %}bg-success{% elif profile.fee_status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ profile.fee_status|capitalize }}
+                                </span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Current Dues:</span>
+                                <span class="{% if profile.current_dues %}text-danger{% endif %}">₹{{ profile.current_dues or '0.00' }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Fine Amount:</span>
+                                <span class="{% if profile.fine_amount %}text-danger{% endif %}">₹{{ profile.fine_amount or '0.00' }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('student.card_requests') }}" class="btn btn-outline-primary">Manage Card</a>
+                        <a href="{{ url_for('student.payment') }}" class="btn btn-outline-success">Make Payment</a>
+                    </div>
                     {% else %}
-                    Your card is {{ profile.card_status }}.
+                    <div class="alert alert-warning mb-3">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        {% if profile.card_status == 'pending' %}
+                        Your card request is being processed.
+                        {% elif profile.card_status == 'inactive' %}
+                        You don't have an active bus card.
+                        {% elif profile.card_status == 'cancelled' %}
+                        Your card has been cancelled.
+                        {% else %}
+                        Your card is {{ profile.card_status }}.
+                        {% endif %}
+                    </div>
+                    {% if not card_requests %}
+                    <a href="{{ url_for('student.card_requests') }}" class="btn btn-primary">Request a Card</a>
+                    {% else %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Pending Request</h6>
+                            <p class="mb-1">You have a pending card request.</p>
+                            <p class="mb-0 small">Request date: {{ card_requests[0].request_date.strftime('%d/%m/%Y') }}</p>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('student.card_requests') }}" class="btn btn-outline-primary">View Request Details</a>
+                    {% endif %}
                     {% endif %}
                 </div>
-                {% if not card_requests %}
-                <a href="{{ url_for('student.card_requests') }}" class="btn btn-primary">Request a Card</a>
-                {% else %}
-                <p class="text-muted">You have a pending card request.</p>
-                {% endif %}
-                {% endif %}
             </div>
         </div>
     </div>

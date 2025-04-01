@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Add New Student | College Bus Card Management System{% endblock %}
+
+{% block heading %}Add New Student{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Student Registration Form</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('staff.add_student') }}">
+                    <!-- User details form -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h4 class="mb-3">User Account Information</h4>
+                        </div>
+                    </div>
+                    
+                    {{ user_form.hidden_tag() }}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ user_form.username.label(class="form-label") }}
+                            {{ user_form.username(class="form-control", placeholder="Username") }}
+                            {% if user_form.username.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in user_form.username.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ user_form.email.label(class="form-label") }}
+                            {{ user_form.email(class="form-control", placeholder="Email address") }}
+                            {% if user_form.email.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in user_form.email.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ user_form.first_name.label(class="form-label") }}
+                            {{ user_form.first_name(class="form-control", placeholder="First name") }}
+                            {% if user_form.first_name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in user_form.first_name.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ user_form.last_name.label(class="form-label") }}
+                            {{ user_form.last_name(class="form-control", placeholder="Last name") }}
+                            {% if user_form.last_name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in user_form.last_name.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ user_form.phone.label(class="form-label") }}
+                            {{ user_form.phone(class="form-control", placeholder="Phone number") }}
+                            {% if user_form.phone.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in user_form.phone.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            {{ user_form.password.label(class="form-label") }}
+                            {{ user_form.password(class="form-control", placeholder="Password") }}
+                            {% if user_form.password.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in user_form.password.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ user_form.confirm_password.label(class="form-label") }}
+                            {{ user_form.confirm_password(class="form-control", placeholder="Confirm password") }}
+                            {% if user_form.confirm_password.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in user_form.confirm_password.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- Student profile form -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h4 class="mb-3">Student Profile Information</h4>
+                        </div>
+                    </div>
+                    
+                    {{ profile_form.hidden_tag() }}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ profile_form.student_id.label(class="form-label") }}
+                            {{ profile_form.student_id(class="form-control", placeholder="Student ID") }}
+                            {% if profile_form.student_id.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in profile_form.student_id.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ profile_form.department.label(class="form-label") }}
+                            {{ profile_form.department(class="form-control", placeholder="Department") }}
+                            {% if profile_form.department.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in profile_form.department.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            {{ profile_form.year.label(class="form-label") }}
+                            {{ profile_form.year(class="form-control", placeholder="Year") }}
+                            {% if profile_form.year.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in profile_form.year.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            {{ profile_form.semester.label(class="form-label") }}
+                            {{ profile_form.semester(class="form-control", placeholder="Semester") }}
+                            {% if profile_form.semester.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in profile_form.semester.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            {{ profile_form.location_id.label(class="form-label") }}
+                            {{ profile_form.location_id(class="form-select") }}
+                            {% if profile_form.location_id.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in profile_form.location_id.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12 d-grid gap-2">
+                            {{ profile_form.submit(class="btn btn-primary btn-lg") }}
+                            <a href="{{ url_for('staff.scan') }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

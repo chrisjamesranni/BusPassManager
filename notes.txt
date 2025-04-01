@@ -1,0 +1,53 @@
+
+admin module
+    dashboard
+        view recent card requests
+        pending request
+        student info dept>year>sem vice
+    manage users
+        can add users (role admin , student, accountant, staff)
+        if student:
+            name, stud ID, email, username, acc created at, department, curent year & sem, location, address.
+            card number, card active, fee info(due, fine), manage card(card requests), make payment
+        if staff:
+            name, staff ID, emain , username, acc created at, designation
+            
+        if accountant:
+            name, staff ID, email, username, acc created at
+    new user registration
+        need approval from admin 
+    manage location    
+        can add new location (location name, address, distance, fees)
+    new card requests
+    student profiles
+        admin can edit it
+    staff profiles
+        admin can edit it
+    accountant profiles  
+        admin can edit it  
+
+student module
+    dashbord
+        can view student information/profile.
+            name, stud ID, email, username, acc created at, department, curent year & sem, location, address.
+        my bus card status.
+            card number, card active, fee info(due, fine), manage card(card requests), make payment
+        new notification.
+        fines and due.
+    profile
+        student information.
+            name, stud ID, department, acc created at, card number (cant changed)
+            email, username,  curent year & sem, location, address, change password.(can edit)
+        profile edit
+            when it edited it must show "change request submitted", wait for accountant/admin to accept the change
+    card request
+        if there is a card in your student ID, you cant request a new card. else can 
+        new card request.
+            reason for request. user input
+            name, stud ID, dept, year, sem, location, address, card number(to cancel card). automatically fetches from stud profile
+        cancel card request.
+        submit request.
+    payment
+    notification
+
+

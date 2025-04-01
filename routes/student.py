@@ -61,14 +61,43 @@ def profile():
     form.location_id.choices = [(l.id, l.name) for l in locations]
     
     if form.validate_on_submit():
-        profile.student_id = form.student_id.data
+        # Store the original values to check for changes
+        original_department = profile.department
+        original_year = profile.year
+        original_semester = profile.semester
+        original_location_id = profile.location_id
+        
+        # Update fields (student_id is not editable)
         profile.department = form.department.data
         profile.year = form.year.data
         profile.semester = form.semester.data
         profile.location_id = form.location_id.data
         
+        # Check if any fields that require admin/accountant approval changed
+        if (original_location_id != profile.location_id):
+            # Create a notification for admins/accountants
+            notification = Notification(
+                user_id=1,  # Admin user (ID 1)
+                title='Profile Change Request',
+                message=f'Student {current_user.first_name} {current_user.last_name} ({profile.student_id}) has requested a location change.',
+                notification_type='general'
+            )
+            db.session.add(notification)
+            
+            # Notify student about pending approval
+            student_notification = Notification(
+                user_id=current_user.id,
+                title='Profile Change Request Submitted',
+                message='Your profile change request has been submitted. You will be notified once it is reviewed.',
+                notification_type='general'
+            )
+            db.session.add(student_notification)
+            flash('Profile change request submitted. Changes will be applied after review.', 'info')
+        else:
+            # For non-critical changes that don't need approval
+            flash('Profile updated successfully!', 'success')
+        
         db.session.commit()
-        flash('Profile updated successfully!', 'success')
         return redirect(url_for('student.dashboard'))
     
     return render_template('student/profile.html', form=form, profile=profile)
@@ -77,26 +106,60 @@ def profile():
 @login_required
 @student_required
 def card_requests():
+    # Get student profile for card status checking
+    profile = StudentProfile.query.filter_by(user_id=current_user.id).first()
     form = CardRequestForm()
     
-    if form.validate_on_submit():
-        request = CardRequest(
-            user_id=current_user.id,
-            request_type=form.request_type.data,
-            reason=form.reason.data,
-            status='pending',
-            request_date=datetime.utcnow()
-        )
-        db.session.add(request)
-        db.session.commit()
-        
-        flash('Card request submitted successfully!', 'success')
-        return redirect(url_for('student.card_requests'))
+    # Determine if the student can request a new card
+    can_request_new = False
+    has_active_card = False
+    
+    if profile:
+        has_active_card = profile.card_status == 'active'
+        can_request_new = not has_active_card
     
     # Get all card requests for this student
     requests = CardRequest.query.filter_by(user_id=current_user.id).order_by(CardRequest.request_date.desc()).all()
     
-    return render_template('student/card_requests.html', form=form, requests=requests)
+    # Check for pending requests
+    has_pending_request = any(request.status == 'pending' for request in requests)
+    
+    if form.validate_on_submit():
+        # Additional validation check
+        if form.request_type.data == 'new' and has_active_card:
+            flash('You already have an active card. Please request to cancel or replace it instead.', 'warning')
+        elif has_pending_request:
+            flash('You already have a pending card request. Please wait for it to be processed.', 'warning')
+        else:
+            request = CardRequest(
+                user_id=current_user.id,
+                request_type=form.request_type.data,
+                reason=form.reason.data,
+                status='pending',
+                request_date=datetime.utcnow()
+            )
+            db.session.add(request)
+            
+            # Add a notification for the admin
+            notification = Notification(
+                user_id=1,  # Admin user (ID 1)
+                title='New Card Request',
+                message=f'Student {current_user.first_name} {current_user.last_name} ({profile.student_id if profile else "N/A"}) has submitted a {form.request_type.data} card request.',
+                notification_type='card'
+            )
+            db.session.add(notification)
+            
+            db.session.commit()
+            flash('Card request submitted successfully!', 'success')
+            return redirect(url_for('student.card_requests'))
+    
+    return render_template('student/card_requests.html', 
+                          form=form, 
+                          requests=requests, 
+                          has_active_card=has_active_card,
+                          can_request_new=can_request_new,
+                          has_pending_request=has_pending_request,
+                          profile=profile)
 
 @student_bp.route('/payment', methods=['GET', 'POST'])
 @login_required
